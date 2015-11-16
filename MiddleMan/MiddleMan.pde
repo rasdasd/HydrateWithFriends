@@ -1,5 +1,13 @@
 import processing.serial.*;
-//import http.requests.*;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.message.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.HttpClient;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import java.util.List;
 Serial myPort;
 int value = 0;
 boolean waiting = true;
@@ -17,14 +25,7 @@ void setup () {
   textAlign(CENTER, CENTER);
   textSize(100);
   setuptare();
-  setuph();
-  /*
-  PostRequest post = new PostRequest("http://httprocessing.heroku.com");
-   post.addData("name", "Rune");
-   post.send();
-   System.out.println("Reponse Content: " + post.getContent());
-   System.out.println("Reponse Content-Length Header: " + post.getHeader("Content-Length"
-   */
+  setuph();   
 }
 int tareX, tareY;      // Position of square button
 int tareSize = 90;     // Diameter of tare
@@ -43,10 +44,13 @@ int hSize = 90;     // Diameter of tare
 color hColor;
 color hHighlight;
 boolean hOver = false;
-boolean httpflag = false;
+boolean httpflag = true;
 void setuph()
 {
-  hColor = color(255,0,0);
+  if(httpflag)
+    hColor = color(0,255,0);
+  else
+    hColor = color(255,0,0);
   hX = width/2-hSize+100;
   hY = height/2-hSize/2+150;
 }
@@ -173,9 +177,30 @@ void doStage()
     }
   }
 }
+String url = "http://ec2-54-149-10-130.us-west-2.compute.amazonaws.com:8080/hydrateserver/sendHydrationData";
 void process(int water_mass, double drink_duration)
 {
   final_mass_display = Integer.toString(water_mass)+"g  " + String.format("%.1f",drink_duration)+"s";
+  if(httpflag)
+  {
+    try
+    {
+      println("----------------------------------------");
+      HttpClient httpClient = new DefaultHttpClient();
+      HttpPost httpPost = new HttpPost(url);
+      List<NameValuePair> data = new ArrayList<NameValuePair>();
+      data.add(new BasicNameValuePair("amount", Integer.toString(water_mass)));
+      httpPost.setEntity( new UrlEncodedFormEntity(data));
+      println(httpPost.getRequestLine());
+      HttpResponse response = httpClient.execute( httpPost );
+      println( response.getStatusLine() );
+      println("----------------------------------------");
+    }
+    catch (Exception e)
+    {
+      println(e.toString());
+    }
+  }
 }
 void reset()
 {
